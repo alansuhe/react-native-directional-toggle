@@ -1,10 +1,10 @@
-# 说明
+# Description
 
-这是一个 React Native / Expo 组件库。
+This is a React Native / Expo component library.
 
-For English version, please click: [English](README.en.md)。
+For Chinese version, please click: [中文](README.md).
 
-## 安装
+## Installation
 
 ```bash
 pnpm add react-native-directional-toggle
@@ -12,24 +12,24 @@ pnpm add react-native-directional-toggle
 yarn add react-native-directional-toggle
 ```
 
-## 依赖包
+## Peer Dependencies
 
 ```bash
 pnpm add react-native-gesture-handler react-native-reanimated react-native-worklets --save-peer
 ```
 
-需要安装的依赖包：
+Dependencies required:
 - react-native-gesture-handler
 - react-native-reanimated
 - react-native-worklets
 
-注意：只能在prebuild后正常用`expo run`的方式运行，不支持expo go。
+Note: Only works with `expo run` after prebuild, not supported by `expo go`.
 
-## 使用
+## Usage
 
-> 参考[示例项目](example/)。
+> Refer to the [example project](example/).
 
-###  导入组件使用
+### Import and use
 
 ```tsx
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -62,4 +62,4 @@ const options = [
 </GestureHandlerRootView>
 
 ```
-注意: App中需要在外层（如_layout.tsx等）包裹GestureHandlerRootView。
+Note: You need to wrap the outer layer of your App (such as _layout.tsx, etc.) with `GestureHandlerRootView`.
