@@ -1,37 +1,63 @@
-# react-native-directional-toggle
+# 说明
 
-Multi-element toggle component for React Native and Expo with support for vertical and horizontal layouts and animations.
+这是一个 React Native / Expo 组件库。
 
-## Installation
+For English version, please click: [English](README.en.md)。
 
+## 安装
 
-```sh
-npm install react-native-directional-toggle
+```bash
+pnpm add react-native-directional-toggle
+
+yarn add react-native-directional-toggle
 ```
 
+## 依赖包
 
-## Usage
-
-
-```js
-import { multiply } from 'react-native-directional-toggle';
-
-// ...
-
-const result = await multiply(3, 7);
+```bash
+pnpm add react-native-gesture-handler react-native-reanimated react-native-worklets --save-peer
 ```
 
+需要安装的依赖包：
+- react-native-gesture-handler
+- react-native-reanimated
+- react-native-worklets
 
-## Contributing
+## 使用
 
-- [Development workflow](CONTRIBUTING.md#development-workflow)
-- [Sending a pull request](CONTRIBUTING.md#sending-a-pull-request)
-- [Code of conduct](CODE_OF_CONDUCT.md)
+> 参考[示例项目](example/)。
 
-## License
+###  导入组件使用
 
-MIT
+```tsx
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Switcher from 'react-native-directional-toggle';
 
----
+const options = [
+  {
+    label: 'Option 1',
+    value: 'Option 1',
+  },
+  {
+    label: 'Option 2',
+    value: 'Option 2',
+  },
+  {
+    label: 'Option 3',
+    value: 'Option 3',
+  },
+];
 
-Made with [create-react-native-library](https://github.com/callstack/react-native-builder-bob)
+...
+
+<GestureHandlerRootView>
+    <Switcher
+            options={options}
+            value={'Option 2'}
+            height={36}
+            onChange={value => console.log(value)}
+    />
+</GestureHandlerRootView>
+
+```
+注意: App中需要在外层（如_layout.tsx等）包裹GestureHandlerRootView。
