@@ -1,6 +1,6 @@
 {
   "name": "react-native-directional-toggle",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Multi-element toggle component for React Native and Expo with support for vertical and horizontal layouts and animations.",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
