@@ -2,6 +2,8 @@
 
 This is a React Native / Expo component library.
 
+Note: expo development can only run normally with `expo run` after prebuild, not supported by `expo go`.
+
 For Chinese version, please click: [中文](README.md).
 
 ## Installation

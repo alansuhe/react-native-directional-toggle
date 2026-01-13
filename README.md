@@ -2,6 +2,8 @@
 
 这是一个 React Native / Expo 组件库。
 
+注意：expo开发时，只能在prebuild后正常用`expo run`的方式运行，不支持expo go。
+
 For English version, please click: [English](README.en.md)。
 
 ## 安装
@@ -23,7 +25,6 @@ pnpm add react-native-gesture-handler react-native-reanimated react-native-workl
 - react-native-reanimated
 - react-native-worklets
 
-注意：只能在prebuild后正常用`expo run`的方式运行，不支持expo go。
 
 ## 使用
 

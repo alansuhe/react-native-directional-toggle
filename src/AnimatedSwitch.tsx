@@ -41,13 +41,13 @@ export function AnimatedSwitch({
   options,
   value,
   onChange,
-  height = 40,
+  height = 36,
   vertical = false,
   colors = {
     activeText: "#373737",
     inactiveText: "#dededeff",
     bgFront: "#d4d4d4",
-    bgBack: "#798393ff",
+    bgBack: "#9a9a9a",
   },
   animationConfig = {
     duration: 100,
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 2,
+    shadowRadius: 1,
     elevation: 2,
   },
   item: {
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     zIndex: 1, // 确保文字在滑块上方
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
   },
 });
