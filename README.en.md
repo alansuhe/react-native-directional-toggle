@@ -65,3 +65,50 @@ const options = [
 
 ```
 Note: You need to wrap the outer layer of your App (such as _layout.tsx, etc.) with `GestureHandlerRootView`.
+
+## Parameters
+The type of props:
+
+```ts
+type Props = {
+  options: Option[];
+  value: string | number;
+  onChange: (value: string | number) => void;
+  height?: number;
+  vertical?: boolean; // 纵向布局
+  colors?: {
+    activeText: string;
+    inactiveText: string;
+    bgFront: string;
+    bgBack: string;
+  };
+  animationConfig?: {
+    duration?: number;
+    damping?: number;
+    stiffness?: number;
+  };
+};
+
+```
+
+Default parameters:
+```ts
+{
+  options,
+  value,
+  onChange,
+  height = 36,
+  vertical = false,
+  colors = {
+    activeText: "#373737",
+    inactiveText: "#dededeff",
+    bgFront: "#d4d4d4",
+    bgBack: "#9a9a9a",
+  },
+  animationConfig = {
+    duration: 100,
+    damping: 50,
+    stiffness: 200,
+  },
+}
+```

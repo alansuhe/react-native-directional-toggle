@@ -64,3 +64,50 @@ const options = [
 
 ```
 注意: App中需要在外层（如_layout.tsx等）包裹GestureHandlerRootView。
+
+## 参数
+组件参数类型如下：
+
+```ts
+type Props = {
+  options: Option[];
+  value: string | number;
+  onChange: (value: string | number) => void;
+  height?: number;
+  vertical?: boolean; // 纵向布局
+  colors?: {
+    activeText: string;
+    inactiveText: string;
+    bgFront: string;
+    bgBack: string;
+  };
+  animationConfig?: {
+    duration?: number;
+    damping?: number;
+    stiffness?: number;
+  };
+};
+
+```
+
+默认值：
+```ts
+{
+  options,
+  value,
+  onChange,
+  height = 36,
+  vertical = false,
+  colors = {
+    activeText: "#373737",
+    inactiveText: "#dededeff",
+    bgFront: "#d4d4d4",
+    bgBack: "#9a9a9a",
+  },
+  animationConfig = {
+    duration: 100,
+    damping: 50,
+    stiffness: 200,
+  },
+}
+```
