@@ -1,5 +1,13 @@
 import { useCallback, useEffect } from "react";
-import { type LayoutChangeEvent, Pressable, StyleSheet, View } from "react-native";
+import {
+  type LayoutChangeEvent,
+  Pressable,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+  type TextStyle,
+} from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   interpolateColor,
@@ -8,6 +16,9 @@ import Animated, {
   useSharedValue,
   withSpring,
   withTiming,
+  type WithSpringConfig,
+  type WithTimingConfig,
+  type SharedValue,
 } from "react-native-reanimated";
 
 type Option = {
@@ -15,158 +26,143 @@ type Option = {
   value: string | number;
 };
 
-type Props = {
+export type AnimatedSwitchProps = {
   options: Option[];
   value: string | number;
   onChange: (value: string | number) => void;
-  height?: number;
+  /**
+   * Direction of the switch.
+   * @default false (Horizontal)
+   */
   vertical?: boolean;
-  colors?: {
-    activeText: string;
-    inactiveText: string;
-    bgFront: string;
-    bgBack: string;
-  };
-  animationConfig?: {
-    duration?: number;
-    damping?: number;
-    stiffness?: number;
-  };
+  /**
+   * Container style. Use this to set width/height.
+   */
+  style?: StyleProp<ViewStyle>;
+  /**
+   * Style for the moving thumb.
+   */
+  thumbStyle?: StyleProp<ViewStyle>;
+  /**
+   * Base style for option text.
+   */
+  textStyle?: StyleProp<TextStyle>;
+  /**
+   * Style for the text when active.
+   */
+  activeTextStyle?: StyleProp<TextStyle>;
+  /**
+   * Style for the text when inactive.
+   */
+  inactiveTextStyle?: StyleProp<TextStyle>;
+  /**
+   * Animation configuration.
+   */
+  animationConfig?: WithTimingConfig | WithSpringConfig;
 };
 
-const THUMB_INSET = 4;
-const VERTICAL_WIDTH = 128;
+const DEFAULT_ANIMATION = {
+  duration: 150,
+  damping: 5,
+  stiffness: 100,
+};
 
 export function AnimatedSwitch({
   options,
   value,
   onChange,
-  height = 36,
   vertical = false,
-  colors = {
-    activeText: "#373737",
-    inactiveText: "#dededeff",
-    bgFront: "#d4d4d4",
-    bgBack: "#9a9a9a",
-  },
-  animationConfig = {
-    duration: 100,
-    damping: 50,
-    stiffness: 200,
-  },
-}: Props) {
-
-  /** ===== SharedValues ===== */
+  style,
+  thumbStyle,
+  textStyle,
+  activeTextStyle,
+  inactiveTextStyle,
+  animationConfig = DEFAULT_ANIMATION,
+}: AnimatedSwitchProps) {
   const itemSizeSV = useSharedValue(0);
   const translate = useSharedValue(0);
   const indexSV = useSharedValue(0);
 
   const currentIndex = options.findIndex((o) => o.value === value);
 
-  /** * 1. 监听外部 value 变化
-   * 当外部修改 value 时，滑块应动画移动到新位置
-   */
-  useEffect(() => {
-    if (currentIndex >= 0) {
-      indexSV.value = currentIndex;
-      // 只有当 itemSizeSV 已经有值（即 Layout 已完成）时才执行动画
-      if (itemSizeSV.value > 0) {
-        translate.value = withTiming(currentIndex * itemSizeSV.value, {
-          duration: animationConfig.duration,
-        });
-      }
-    }
-  }, [currentIndex, animationConfig.duration]);
+  // Measure container layout
+  const onLayout = useCallback((e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
 
-  /** ===== JS 回调 ===== */
+    const totalSize = vertical ? (height - 4) : (width - 4);
+    const itemSize = totalSize / options.length;
+    itemSizeSV.value = itemSize;
+
+    // Fix initial position on layout
+    if (currentIndex >= 0 && itemSize > 0) {
+      translate.value = currentIndex * itemSize;
+    }
+  }, [vertical, options.length, currentIndex, itemSizeSV, translate]);
+
+  // Sync with external value changes
+  useEffect(() => {
+    if (currentIndex >= 0 && itemSizeSV.value > 0) {
+      indexSV.value = currentIndex;
+      translate.value = withTiming(currentIndex * itemSizeSV.value, animationConfig as WithTimingConfig);
+    }
+  }, [currentIndex, animationConfig]);
+
   const emitChange = useCallback(
     (index: number) => {
-      if (options.length > 0 && index >= 0 && index < options.length) {
-        onChange(options[index]?.value || "");
+      // Clamp index to safe bounds
+      const safeIndex = Math.max(0, Math.min(index, options.length - 1));
+      if (options[safeIndex]) {
+        onChange(options[safeIndex].value);
       }
     },
-    [onChange, options],
+    [onChange, options]
   );
 
-  /** ===== Tap 点击切换 ===== */
   const handlePress = (index: number) => {
+    if (itemSizeSV.value === 0) return;
     indexSV.value = index;
-    translate.value = withTiming(index * itemSizeSV.value, {
-      duration: animationConfig.duration ?? 150
-    });
+    translate.value = withTiming(index * itemSizeSV.value, animationConfig as WithTimingConfig);
     emitChange(index);
   };
 
-  /** ===== Drag 手势 ===== */
   const panGesture = Gesture.Pan()
     .onUpdate((e) => {
-      const delta = vertical ? e.translationY : e.translationX;
-      // 基于手势开始时的位置进行偏移计算
-      const pos = delta + indexSV.value * itemSizeSV.value;
+      if (itemSizeSV.value === 0) return;
+      const term = vertical ? e.translationY : e.translationX;
+      const startPos = indexSV.value * itemSizeSV.value;
+      const pos = startPos + term;
       const max = (options.length - 1) * itemSizeSV.value;
-
       translate.value = Math.min(Math.max(0, pos), max);
     })
     .onEnd(() => {
+      if (itemSizeSV.value === 0) return;
       const index = Math.round(translate.value / itemSizeSV.value);
       indexSV.value = index;
-
-      translate.value = withSpring(index * itemSizeSV.value, {
-        damping: animationConfig.damping ?? 20,
-        stiffness: animationConfig.stiffness ?? 200,
-      });
-
+      translate.value = withSpring(index * itemSizeSV.value, animationConfig as WithSpringConfig);
       runOnJS(emitChange)(index);
     });
 
-  /** ===== Thumb 动画样式 ===== */
   const animatedThumbStyle = useAnimatedStyle(() => {
-    if (vertical) {
-      return {
-        height: itemSizeSV.value - THUMB_INSET * 2,
-        top: THUMB_INSET,
-        left: THUMB_INSET,
-        right: THUMB_INSET,
-        transform: [{ translateY: translate.value }],
-      };
-    }
+    // If layout not ready, hide thumb or show nothing
+    if (itemSizeSV.value === 0) return { opacity: 0 };
+
+    const transform = vertical
+      ? [{ translateY: translate.value }]
+      : [{ translateX: translate.value }];
+
+    const sizeStyle = vertical
+      ? { height: itemSizeSV.value, width: '100%' }
+      : { width: itemSizeSV.value, height: '100%' };
+
     return {
-      width: itemSizeSV.value - THUMB_INSET * 2,
-      left: THUMB_INSET,
-      top: THUMB_INSET,
-      bottom: THUMB_INSET,
-      transform: [{ translateX: translate.value }],
+      position: 'absolute',
+      left: 2,
+      top: 2,
+      ...sizeStyle,
+      transform,
+      opacity: 1,
     };
   });
-
-  /** ===== Label 动画样式 ===== */
-  const getLabelAnimatedStyle = (index: number) =>
-    useAnimatedStyle(() => {
-      const center = index * itemSizeSV.value;
-      const color = interpolateColor(
-        translate.value,
-        [center - itemSizeSV.value, center, center + itemSizeSV.value],
-        [colors.inactiveText, colors.activeText, colors.inactiveText],
-      );
-      return { color };
-    });
-
-  /** * 2. Layout 初始化
-   * 这是修复初始显示问题的关键
-   */
-  const onLayout = (e: LayoutChangeEvent) => {
-    const size = vertical
-      ? e.nativeEvent.layout.height
-      : e.nativeEvent.layout.width;
-
-    const newItemSize = size / options.length;
-    itemSizeSV.value = newItemSize;
-
-    // 核心修复：在获取到尺寸的第一时间，根据 currentIndex 强行同步 translate 的值
-    if (currentIndex >= 0) {
-      translate.value = currentIndex * newItemSize;
-    }
-  };
 
   return (
     <GestureDetector gesture={panGesture}>
@@ -174,35 +170,25 @@ export function AnimatedSwitch({
         onLayout={onLayout}
         style={[
           styles.container,
-          { backgroundColor: colors.bgBack },
-          vertical
-            ? {
-              height: height * options.length,
-              width: VERTICAL_WIDTH,
-              flexDirection: "column",
-            }
-            : { height, flexDirection: "row" },
+          vertical ? styles.vertical : styles.horizontal,
+          style, // User override
         ]}
       >
-        {/* 滑块背景 */}
-        <Animated.View
-          pointerEvents="none"
-          style={[styles.thumbBase, { backgroundColor: colors.bgFront }, animatedThumbStyle]}
-        />
+        <Animated.View style={[styles.thumb, thumbStyle, animatedThumbStyle]} />
 
-        {/* 选项列表 */}
         {options.map((opt, index) => {
-          const labelStyle = getLabelAnimatedStyle(index);
           return (
-            <Pressable
+            <OptionItem
               key={opt.value}
-              style={styles.item}
+              label={opt.label}
               onPress={() => handlePress(index)}
-            >
-              <Animated.Text style={[styles.label, labelStyle]}>
-                {opt.label}
-              </Animated.Text>
-            </Pressable>
+              index={index}
+              translate={translate}
+              itemSizeSV={itemSizeSV}
+              textStyle={textStyle}
+              activeTextStyle={activeTextStyle}
+              inactiveTextStyle={inactiveTextStyle}
+            />
           );
         })}
       </View>
@@ -210,29 +196,87 @@ export function AnimatedSwitch({
   );
 }
 
+// Sub-component for individual options to isolate animated styles
+const OptionItem = ({
+  label,
+  onPress,
+  index,
+  translate,
+  itemSizeSV,
+  textStyle,
+  activeTextStyle,
+  inactiveTextStyle
+}: {
+  label: string;
+  onPress: () => void;
+  index: number;
+  translate: SharedValue<number>;
+  itemSizeSV: SharedValue<number>;
+  textStyle?: StyleProp<TextStyle>;
+  activeTextStyle?: StyleProp<TextStyle>;
+  inactiveTextStyle?: StyleProp<TextStyle>;
+}) => {
+
+  const activeColor = (StyleSheet.flatten(activeTextStyle)?.color as string) ?? '#000';
+  const inactiveColor = (StyleSheet.flatten(inactiveTextStyle)?.color as string) ?? '#999';
+
+  const textAnimatedStyle = useAnimatedStyle(() => {
+    const center = index * itemSizeSV.value;
+    const color = interpolateColor(
+      translate.value,
+      [center - itemSizeSV.value, center, center + itemSizeSV.value],
+      [inactiveColor, activeColor, inactiveColor]
+    );
+    return { color };
+  });
+
+  return (
+    <Pressable style={styles.option} onPress={onPress}>
+      <Animated.Text
+        style={[
+          styles.text,
+          textStyle,
+          textAnimatedStyle
+        ]}
+        numberOfLines={1}
+      >
+        {label}
+      </Animated.Text>
+    </Pressable>
+  );
+};
+
 const styles = StyleSheet.create({
   container: {
+    // backgroundColor: '#f0f0f0',
     borderRadius: 16,
-    overflow: "hidden",
-    flex: 1,
+    overflow: 'hidden',
+    padding: 2,
+    // position: 'relative',
   },
-  thumbBase: {
-    position: "absolute",
-    borderRadius: 12,
+  horizontal: {
+    flexDirection: 'row',
+  },
+  vertical: {
+    flexDirection: 'column',
+  },
+  thumb: {
+    // backgroundColor: '#fff',
+    borderRadius: 16,
     shadowColor: '#000',
-    shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
     shadowRadius: 1,
-    elevation: 2,
+    elevation: 1,
   },
-  item: {
+  option: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1, // 确保文字在滑块上方
+    alignItems: 'center',
+    justifyContent: 'center',
+    // zIndex: 1
   },
-  label: {
-    fontSize: 13,
-    fontWeight: "600",
+  text: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
