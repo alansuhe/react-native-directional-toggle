@@ -1,0 +1,42 @@
+# Development files
+example/
+.github/
+.vscode/
+.expo/
+
+# Config files
+.editorconfig
+.eslintrc*
+.prettierrc*
+eslint.config.*
+tsconfig.json
+tsconfig.build.json
+babel.config.js
+lefthook.yml
+.nvmrc
+.watchmanconfig
+.yarnrc.yml
+.npmrc
+pnpm-workspace.yaml
+
+# Documentation
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+PUBLISH.md
+
+# Tests
+**/__tests__/
+**/__fixtures__/
+**/__mocks__/
+*.test.*
+*.spec.*
+
+# Source control
+.git/
+.gitignore
+.gitattributes
+
+# Locks
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
