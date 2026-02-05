@@ -86,3 +86,24 @@ android/generated
 nitrogen/
 
 PUBLISH.md
+
+# Coverage
+coverage/
+*.lcov
+
+# Husky (if used in future)
+.husky/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/

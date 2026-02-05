@@ -40,3 +40,14 @@ PUBLISH.md
 pnpm-lock.yaml
 yarn.lock
 package-lock.json
+
+# Coverage
+coverage/
+*.lcov
+
+# CI/CD (already included above but being explicit)
+.github/
+
+# Temp files
+*.tmp
+*.temp

@@ -2,16 +2,27 @@
   "name": "react-native-directional-toggle",
   "version": "0.1.1",
   "description": "Multi-element toggle component for React Native and Expo with support for vertical and horizontal layouts and animations.",
+  "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
   "types": "./lib/typescript/module/src/index.d.ts",
+  "react-native": "./src/index.tsx",
   "exports": {
     ".": {
-      "source": "./src/index.tsx",
-      "types": "./lib/typescript/module/src/index.d.ts",
-      "default": "./lib/module/index.js"
+      "import": {
+        "types": "./lib/typescript/module/src/index.d.ts",
+        "default": "./lib/module/index.js"
+      },
+      "require": {
+        "types": "./lib/typescript/commonjs/src/index.d.ts",
+        "default": "./lib/commonjs/index.js"
+      }
     },
     "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
   },
   "files": [
     "src",
@@ -40,7 +51,13 @@
     "animated",
     "gesture",
     "ios",
-    "android"
+    "android",
+    "segmented-control",
+    "multi-switch",
+    "animated-switch",
+    "react-native-component",
+    "ui-component",
+    "typescript"
   ],
   "repository": {
     "type": "git",

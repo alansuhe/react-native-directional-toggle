@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect } from 'react';
 import {
   type LayoutChangeEvent,
   Pressable,
@@ -7,11 +7,11 @@ import {
   type StyleProp,
   type ViewStyle,
   type TextStyle,
-} from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+} from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { scheduleOnRN } from 'react-native-worklets';
 import Animated, {
   interpolateColor,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -19,7 +19,7 @@ import Animated, {
   type WithSpringConfig,
   type WithTimingConfig,
   type SharedValue,
-} from "react-native-reanimated";
+} from 'react-native-reanimated';
 
 type Option = {
   label: string;
@@ -86,25 +86,32 @@ export function AnimatedSwitch({
   const currentIndex = options.findIndex((o) => o.value === value);
 
   // Measure container layout
-  const onLayout = useCallback((e: LayoutChangeEvent) => {
-    const { width, height } = e.nativeEvent.layout;
+  const onLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      const { width, height } = e.nativeEvent.layout;
 
-    const totalSize = vertical ? (height - 4) : (width - 4);
-    const itemSize = totalSize / options.length;
-    itemSizeSV.value = itemSize;
+      const totalSize = vertical ? height - 4 : width - 4;
+      const itemSize = totalSize / options.length;
+      itemSizeSV.value = itemSize;
 
-    // Fix initial position on layout
-    if (currentIndex >= 0 && itemSize > 0) {
-      translate.value = currentIndex * itemSize;
-    }
-  }, [vertical, options.length, currentIndex, itemSizeSV, translate]);
+      // Fix initial position on layout
+      if (currentIndex >= 0 && itemSize > 0) {
+        translate.value = currentIndex * itemSize;
+      }
+    },
+    [vertical, options.length, currentIndex, itemSizeSV, translate]
+  );
 
   // Sync with external value changes
   useEffect(() => {
     if (currentIndex >= 0 && itemSizeSV.value > 0) {
       indexSV.value = currentIndex;
-      translate.value = withTiming(currentIndex * itemSizeSV.value, animationConfig as WithTimingConfig);
+      translate.value = withTiming(
+        currentIndex * itemSizeSV.value,
+        animationConfig as WithTimingConfig
+      );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, animationConfig]);
 
   const emitChange = useCallback(
@@ -121,7 +128,10 @@ export function AnimatedSwitch({
   const handlePress = (index: number) => {
     if (itemSizeSV.value === 0) return;
     indexSV.value = index;
-    translate.value = withTiming(index * itemSizeSV.value, animationConfig as WithTimingConfig);
+    translate.value = withTiming(
+      index * itemSizeSV.value,
+      animationConfig as WithTimingConfig
+    );
     emitChange(index);
   };
 
@@ -138,8 +148,11 @@ export function AnimatedSwitch({
       if (itemSizeSV.value === 0) return;
       const index = Math.round(translate.value / itemSizeSV.value);
       indexSV.value = index;
-      translate.value = withSpring(index * itemSizeSV.value, animationConfig as WithSpringConfig);
-      runOnJS(emitChange)(index);
+      translate.value = withSpring(
+        index * itemSizeSV.value,
+        animationConfig as WithSpringConfig
+      );
+      scheduleOnRN(emitChange, index);
     });
 
   const animatedThumbStyle = useAnimatedStyle(() => {
@@ -205,7 +218,7 @@ const OptionItem = ({
   itemSizeSV,
   textStyle,
   activeTextStyle,
-  inactiveTextStyle
+  inactiveTextStyle,
 }: {
   label: string;
   onPress: () => void;
@@ -216,9 +229,10 @@ const OptionItem = ({
   activeTextStyle?: StyleProp<TextStyle>;
   inactiveTextStyle?: StyleProp<TextStyle>;
 }) => {
-
-  const activeColor = (StyleSheet.flatten(activeTextStyle)?.color as string) ?? '#000';
-  const inactiveColor = (StyleSheet.flatten(inactiveTextStyle)?.color as string) ?? '#999';
+  const activeColor =
+    (StyleSheet.flatten(activeTextStyle)?.color as string) ?? '#000';
+  const inactiveColor =
+    (StyleSheet.flatten(inactiveTextStyle)?.color as string) ?? '#999';
 
   const textAnimatedStyle = useAnimatedStyle(() => {
     const center = index * itemSizeSV.value;
@@ -233,11 +247,7 @@ const OptionItem = ({
   return (
     <Pressable style={styles.option} onPress={onPress}>
       <Animated.Text
-        style={[
-          styles.text,
-          textStyle,
-          textAnimatedStyle
-        ]}
+        style={[styles.text, textStyle, textAnimatedStyle]}
         numberOfLines={1}
       >
         {label}
