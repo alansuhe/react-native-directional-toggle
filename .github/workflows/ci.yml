@@ -42,7 +42,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Run unit tests
-        run: pnpm test -- --maxWorkers=2 --coverage
+        run: pnpm run test -- --maxWorkers=2 --coverage
 
   build-library:
     runs-on: ubuntu-latest
@@ -69,4 +69,4 @@ jobs:
 
       - name: Build example for Web
         run: |
-          pnpm --filter react-native-directional-toggle-example expo export --platform web
+          pnpm --filter react-native-directional-toggle-example export:web
