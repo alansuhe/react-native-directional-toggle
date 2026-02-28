@@ -1,5 +1,5 @@
-import { View, StyleSheet, Text } from 'react-native';
-import Switcher from 'react-native-directional-toggle';
+import { View, StyleSheet, Text, Switch } from 'react-native';
+import AnimatedSwitcher from 'react-native-directional-toggle';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useState } from 'react';
 
@@ -12,23 +12,25 @@ const options = [
 export default function App() {
   const [val1, setVal1] = useState('Option 2');
   const [val2, setVal2] = useState('Option 2');
+  const [disabled, setDisabled] = useState(false);
 
   return (
     <GestureHandlerRootView style={styles.root}>
       <>
         <Text style={styles.header}>Horizontal: {val1}</Text>
-        <Switcher
+        <AnimatedSwitcher
           options={options}
           value={val1}
           onChange={(v) => setVal1(v as string)}
           style={styles.horizontalSwitch}
           thumbStyle={styles.thumb}
           activeTextStyle={styles.activeText}
+          disabled={disabled}
         />
 
         <Text style={styles.header}>Vertical: {val2}</Text>
         <View style={styles.verticalContainer}>
-          <Switcher
+          <AnimatedSwitcher
             options={options}
             vertical
             value={val2}
@@ -37,8 +39,12 @@ export default function App() {
             thumbStyle={styles.thumb}
             textStyle={styles.text}
             activeTextStyle={styles.activeText}
+            disabled={disabled}
           />
         </View>
+
+        <Text style={styles.header}>Controls</Text>
+        <Switch value={disabled} onValueChange={setDisabled} />
       </>
     </GestureHandlerRootView>
   );

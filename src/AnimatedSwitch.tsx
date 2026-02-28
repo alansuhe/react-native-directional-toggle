@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   type LayoutChangeEvent,
   Pressable,
@@ -59,6 +59,11 @@ export type AnimatedSwitchProps = {
    * Animation configuration.
    */
   animationConfig?: WithTimingConfig | WithSpringConfig;
+  /**
+   * When true, the switch does not respond to interactions.
+   * @default false
+   */
+  disabled?: boolean;
 };
 
 const DEFAULT_ANIMATION = {
@@ -78,7 +83,9 @@ export function AnimatedSwitch({
   activeTextStyle,
   inactiveTextStyle,
   animationConfig = DEFAULT_ANIMATION,
+  disabled = false,
 }: AnimatedSwitchProps) {
+  console.log('disabled ---->', disabled);
   const itemSizeSV = useSharedValue(0);
   const translate = useSharedValue(0);
   const indexSV = useSharedValue(0);
@@ -126,8 +133,7 @@ export function AnimatedSwitch({
   );
 
   const handlePress = (index: number) => {
-    if (itemSizeSV.value === 0) return;
-    indexSV.value = index;
+    if (disabled || itemSizeSV.value === 0) return;
     translate.value = withTiming(
       index * itemSizeSV.value,
       animationConfig as WithTimingConfig
@@ -135,25 +141,31 @@ export function AnimatedSwitch({
     emitChange(index);
   };
 
-  const panGesture = Gesture.Pan()
-    .onUpdate((e) => {
-      if (itemSizeSV.value === 0) return;
-      const term = vertical ? e.translationY : e.translationX;
-      const startPos = indexSV.value * itemSizeSV.value;
-      const pos = startPos + term;
-      const max = (options.length - 1) * itemSizeSV.value;
-      translate.value = Math.min(Math.max(0, pos), max);
-    })
-    .onEnd(() => {
-      if (itemSizeSV.value === 0) return;
-      const index = Math.round(translate.value / itemSizeSV.value);
-      indexSV.value = index;
-      translate.value = withSpring(
-        index * itemSizeSV.value,
-        animationConfig as WithSpringConfig
-      );
-      scheduleOnRN(emitChange, index);
-    });
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .enabled(!disabled)
+        .onUpdate((e) => {
+          if (itemSizeSV.value === 0) return;
+          const term = vertical ? e.translationY : e.translationX;
+          const startPos = indexSV.value * itemSizeSV.value;
+          const pos = startPos + term;
+          const max = (options.length - 1) * itemSizeSV.value;
+          translate.value = Math.min(Math.max(0, pos), max);
+        })
+        .onEnd(() => {
+          if (itemSizeSV.value === 0) return;
+          const index = Math.round(translate.value / itemSizeSV.value);
+          indexSV.value = index;
+          translate.value = withSpring(
+            index * itemSizeSV.value,
+            animationConfig as WithSpringConfig
+          );
+          scheduleOnRN(emitChange, index);
+        }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [disabled]
+  );
 
   const animatedThumbStyle = useAnimatedStyle(() => {
     // If layout not ready, hide thumb or show nothing
@@ -177,35 +189,40 @@ export function AnimatedSwitch({
     };
   });
 
-  return (
-    <GestureDetector gesture={panGesture}>
-      <View
-        onLayout={onLayout}
-        style={[
-          styles.container,
-          vertical ? styles.vertical : styles.horizontal,
-          style, // User override
-        ]}
-      >
-        <Animated.View style={[styles.thumb, thumbStyle, animatedThumbStyle]} />
+  const content = (
+    <View
+      onLayout={onLayout}
+      style={[
+        styles.container,
+        vertical ? styles.vertical : styles.horizontal,
+        disabled && styles.disabled,
+        style,
+      ]}
+    >
+      <Animated.View style={[styles.thumb, thumbStyle, animatedThumbStyle]} />
 
-        {options.map((opt, index) => {
-          return (
-            <OptionItem
-              key={opt.value}
-              label={opt.label}
-              onPress={() => handlePress(index)}
-              index={index}
-              translate={translate}
-              itemSizeSV={itemSizeSV}
-              textStyle={textStyle}
-              activeTextStyle={activeTextStyle}
-              inactiveTextStyle={inactiveTextStyle}
-            />
-          );
-        })}
-      </View>
-    </GestureDetector>
+      {options.map((opt, index) => (
+        <OptionItem
+          key={String(opt.value)}
+          label={opt.label}
+          onPress={() => handlePress(index)}
+          index={index}
+          translate={translate}
+          itemSizeSV={itemSizeSV}
+          textStyle={textStyle}
+          activeTextStyle={activeTextStyle}
+          inactiveTextStyle={inactiveTextStyle}
+          disabled={disabled}
+        />
+      ))}
+    </View>
+  );
+
+  // disabled 时不挂载 GestureDetector
+  return disabled ? (
+    content
+  ) : (
+    <GestureDetector gesture={panGesture}>{content}</GestureDetector>
   );
 }
 
@@ -219,6 +236,7 @@ const OptionItem = ({
   textStyle,
   activeTextStyle,
   inactiveTextStyle,
+  disabled,
 }: {
   label: string;
   onPress: () => void;
@@ -228,6 +246,7 @@ const OptionItem = ({
   textStyle?: StyleProp<TextStyle>;
   activeTextStyle?: StyleProp<TextStyle>;
   inactiveTextStyle?: StyleProp<TextStyle>;
+  disabled?: boolean;
 }) => {
   const activeColor =
     (StyleSheet.flatten(activeTextStyle)?.color as string) ?? '#000';
@@ -245,7 +264,7 @@ const OptionItem = ({
   });
 
   return (
-    <Pressable style={styles.option} onPress={onPress}>
+    <Pressable style={styles.option} onPress={onPress} disabled={disabled}>
       <Animated.Text
         style={[styles.text, textStyle, textAnimatedStyle]}
         numberOfLines={1}
@@ -258,11 +277,13 @@ const OptionItem = ({
 
 const styles = StyleSheet.create({
   container: {
-    // backgroundColor: '#f0f0f0',
     borderRadius: 16,
     overflow: 'hidden',
     padding: 2,
-    // position: 'relative',
+    position: 'relative',
+  },
+  disabled: {
+    opacity: 0.5,
   },
   horizontal: {
     flexDirection: 'row',
@@ -271,7 +292,6 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   thumb: {
-    // backgroundColor: '#fff',
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
